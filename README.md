@@ -8,7 +8,8 @@ A Jekyll site featuring an interactive full-screen map powered by MapLibre GL JS
 - 🎨 Carto Positron basemap hosted on Carto's servers
 - 📱 Responsive design with Bootstrap 5.3.2
 - ⚡ Jekyll 4.4.1 for static site generation
-- 🎨 CDN-based CSS (no Sass compilation needed)
+- 🎨 Modular CSS and JavaScript architecture
+- 📁 Separate layouts for map and standard pages
 - 🚀 GitHub Pages deployment ready
 - 🔧 StandardRB for Ruby code linting
 
@@ -65,12 +66,30 @@ The map is centered on Lisbon, Portugal by default. You can modify the map setti
 - **Zoom level**: Modify the `zoom` property  
 - **Basemap**: The Carto Positron style is configured in the `style` object
 
+### File Structure
+
+```
+├── _layouts/
+│   ├── default.html    # Standard layout with header/footer
+│   └── map.html        # Full-screen map layout
+├── assets/
+│   ├── css/
+│   │   ├── main.css    # Main site styles
+│   │   └── map.css     # Map-specific styles
+│   └── js/
+│       └── map.js      # Map initialization code
+├── index.markdown      # Map page (uses map layout)
+└── about.markdown      # About page (uses default layout)
+```
+
 ### Customization
 
 - **Site information**: Edit `_config.yml`
-- **Styles**: Modify the `<style>` section in `_layouts/default.html`
-- **Content**: Edit `index.markdown`
-- **Layout**: Modify `_layouts/default.html`
+- **Map styles**: Modify `assets/css/map.css`
+- **Main site styles**: Modify `assets/css/main.css`
+- **Map configuration**: Edit `assets/js/map.js`
+- **Layouts**: Modify files in `_layouts/`
+- **Content**: Edit `.markdown` files
 
 ## Deployment
 
@@ -95,12 +114,21 @@ JEKYLL_ENV=production bundle exec jekyll build
 # The built site will be in the _site directory
 ```
 
-## Map Features
+## Layouts
 
-- **Navigation controls**: Zoom in/out buttons
-- **Geolocation**: Find user's current location
-- **Scale indicator**: Shows map scale
-- **Responsive overlay**: Site title and description with glass-morphism effect
+### Map Layout (`map.html`)
+- Full-screen map experience
+- Navigation controls (zoom in/out buttons)
+- Geolocation support
+- Scale indicator
+- Responsive overlay with glass-morphism effect
+- No header/footer for immersive experience
+
+### Default Layout (`default.html`)
+- Traditional website structure with header and footer
+- Navigation menu
+- Responsive Bootstrap-based design
+- Perfect for content pages like About, Blog posts, etc.
 
 ## Browser Support
 
@@ -127,5 +155,6 @@ This project is open source. Please check the LICENSE file for details.
 - **CSS Framework**: Bootstrap 5.3.2 (CDN)
 - **Map Library**: MapLibre GL JS 3.6.2 (CDN)
 - **Basemap**: Carto Positron (hosted on Carto servers)
+- **Architecture**: Modular CSS/JS files, separate layouts
 - **Code Quality**: StandardRB
 - **Deployment**: GitHub Pages via GitHub Actions
