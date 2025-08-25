@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en" }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {%- seo -%}
+    {%- feed_meta -%}
+    {%- if jekyll.environment == 'production' and site.google_analytics -%}
+      {%- include google-analytics.html -%}
+    {%- endif -%}
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <!-- MapLibre GL JS CSS -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100vh;
+      }
+
+      .map-overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 320px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      .map-overlay h1 {
+        margin: 0 0 12px 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .map-overlay p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #7f8c8d;
+        line-height: 1.4;
+      }
+
+      /* MapLibre GL controls styling */
+      .maplibregl-ctrl-group {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      }
+
+      .maplibregl-ctrl button {
+        border-radius: 6px !important;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .map-overlay {
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          max-width: none;
+        }
+
+        .map-overlay h1 {
+          font-size: 1.25rem;
+        }
+
+        .map-overlay p {
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="page-content" aria-label="Content">
+      <div id="map"></div>
+      {{ content }}
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+    <script>
+      // Initialize the map
+      const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+          'version': 8,
+          'sources': {
+            'carto-light': {
+              'type': 'raster',
+              'tiles': [
+                'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                'https://cartodb-basemaps-b.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                'https://cartodb-basemaps-c.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                'https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png'
+              ],
+              'tileSize': 256,
+              'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            }
+          },
+          'layers': [
+            {
+              'id': 'carto-light-layer',
+              'type': 'raster',
+              'source': 'carto-light',
+              'minzoom': 0,
+              'maxzoom': 22
+            }
+          ]
+        },
+        center: [-9.142, 38.736], // Lisbon, Portugal coordinates
+        zoom: 12
+      });
+
+      // Add navigation control (the +/- zoom buttons)
+      map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      // Add geolocate control
+      map.addControl(
+        new maplibregl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
+          },
+          trackUserLocation: true,
+          showUserHeading: true
+        }), 'top-right'
+      );
+
+      // Add scale control
+      map.addControl(new maplibregl.ScaleControl({
+        maxWidth: 100,
+        unit: 'metric'
+      }), 'bottom-left');
+
+      // Optional: Add a marker at the center
+      // new maplibregl.Marker()
+      //   .setLngLat([-9.142, 38.736])
+      //   .addTo(map);
+
+      // Log when map is loaded
+      map.on('load', function() {
+        console.log('Map loaded successfully!');
+      });
+    </script>
+  </body>
+</html>

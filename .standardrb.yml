@@ -1,0 +1,26 @@
+# StandardRB configuration file
+# https://github.com/testdouble/standard
+
+# Ruby version target
+ruby_version: 3.0
+
+# Files to ignore
+ignore:
+  - 'vendor/**/*'
+  - 'node_modules/**/*'
+  - 'tmp/**/*'
+  - '_site/**/*'
+  - '.jekyll-cache/**/*'
+  - 'Gemfile.lock'
+
+# Enable/disable specific cops
+# Standard is pretty opinionated, but you can make adjustments here if needed
+
+# Parallel processing
+parallel: true
+
+# Display cop names in offense messages
+display_cop_names: true
+
+# Extra details in offense messages
+extra_details: true
