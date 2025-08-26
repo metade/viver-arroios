@@ -4,6 +4,8 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 
+assets/data
+
 # Bundler
 .bundle/
 vendor/

@@ -1,6 +1,7 @@
 require "json"
 require "http"
 require "rake/clean"
+require "open3"
 
 # Load the downloader class
 require_relative "scripts/download_maps"
@@ -42,7 +43,7 @@ file "tmp/propostas.geojson" => "tmp" do
   end
 end
 
-file "tmp/data.pmtiles" => ["tmp/propostas.geojson"] do
+file "assets/data/data.pmtiles" => ["tmp/propostas.geojson"] do |task|
   # Check if tippecanoe is available
   unless system("which tippecanoe > /dev/null 2>&1")
     puts "Error: Tippecanoe is required but not found"
@@ -59,20 +60,22 @@ file "tmp/data.pmtiles" => ["tmp/propostas.geojson"] do
     "-o", task.name
   ] + task.sources
 
+  p cmd
+
   stdout, stderr, status = Open3.capture3(*cmd)
   $stdout.print stdout
   $stderr.print stderr
 
-  puts "✅ Successfully generated PMTiles: tmp/data.pmtiles"
+  puts "✅ Successfully generated PMTiles: #{task.name}"
   puts "   Layers included: #{task.sources.map { |f| File.basename(f, ".geojson") }.join(", ")}"
-  puts "   File size: #{File.size("tmp/data.pmtiles")} bytes"
+  puts "   File size: #{File.size("#{task.name}")} bytes"
 end
 
 desc "Download data and generate PMTiles (full workflow)"
-task build: "tmp/data.pmtiles"
+task build: "assets/data/data.pmtiles"
 
 # Files to clean
 CLEAN.include("tmp/*.geojson")
 CLEAN.include("tmp/raw_data.kml")
 CLEAN.include("tmp/temp_data.geojson")
-CLEAN.include("tmp/data.pmtiles")
+CLEAN.include("assets/data/data.pmtiles")
