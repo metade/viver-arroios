@@ -121,11 +121,21 @@ JEKYLL_ENV=production bundle exec jekyll build
 Download and process data from Google My Maps:
 
 ```bash
-# Set your Google My Maps ID
+# Set your Google My Maps ID for the main propostas layer
 export MY_GOOGLE_MAPS_ID="your_map_id_here"
 
-# Download and process the data
+# Download and process the propostas layer
 rake download_maps
+
+# Download additional layers (optional)
+LAYER_NAME=comercio MAPS_ID="your_commerce_map_id" rake download_layer
+LAYER_NAME=residencial MAPS_ID="your_residential_map_id" rake download_layer
+
+# Generate PMTiles from all GeoJSON layers
+rake generate_pmtiles
+
+# Or run the full workflow (download propostas + PMTiles)
+rake build
 
 # Clean up temporary files
 rake clean
@@ -133,8 +143,14 @@ rake clean
 
 **Requirements:**
 - GDAL/OGR: `brew install gdal` (for KML to GeoJSON conversion)
+- Tippecanoe: `brew install tippecanoe` (for multi-layer PMTiles generation)
 - HTTP gem: `bundle install` (for reliable downloads)
 - Public Google My Maps (set to "Anyone with the link" can view)
+
+**Layer Structure:**
+- Main layer: `propostas` (from `MY_GOOGLE_MAPS_ID`)
+- Additional layers: Use `rake download_layer` with `LAYER_NAME` and `MAPS_ID`
+- Output: Single PMTiles file with all layers combined
 
 ## Layouts
 
@@ -177,7 +193,8 @@ This project is open source. Please check the LICENSE file for details.
 - **CSS Framework**: Bootstrap 5.3.2 (CDN)
 - **Map Library**: MapLibre GL JS 3.6.2 (CDN)
 - **Basemap**: Carto Positron (hosted on Carto servers)
-- **Data Processing**: Ruby classes for Google My Maps integration
+- **Data Processing**: Ruby classes for Google My Maps integration with multi-layer support
+- **Tile Generation**: Tippecanoe for multi-layer PMTiles creation
 - **Architecture**: Modular CSS/JS files, separate layouts
 - **Code Quality**: StandardRB
 - **Deployment**: GitHub Pages via GitHub Actions

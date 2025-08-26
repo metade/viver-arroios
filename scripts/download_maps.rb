@@ -4,11 +4,12 @@ require "http"
 require "json"
 
 class GoogleMyMapsDownloader
-  attr_reader :valid_features, :maps_id, :output_file
+  attr_reader :valid_features, :maps_id, :output_file, :layer_name
 
-  def initialize(maps_id:, output: "tmp/data.geojson", verbose: false)
+  def initialize(maps_id:, layer_name: "propostas", output: nil, verbose: false)
     @verbose = verbose
-    @output_file = output
+    @layer_name = layer_name
+    @output_file = output || "tmp/#{layer_name}.geojson"
     @maps_id = maps_id
     @kml_data = nil
     @geojson_data = nil
@@ -109,7 +110,7 @@ class GoogleMyMapsDownloader
     # Create the final GeoJSON structure
     filtered_geojson = {
       "type" => "FeatureCollection",
-      "name" => "Google My Maps Data (#{@maps_id})",
+      "name" => "#{@layer_name.capitalize} Layer (#{@maps_id})",
       "crs" => {
         "type" => "name",
         "properties" => {
@@ -176,6 +177,7 @@ class GoogleMyMapsDownloader
     file_size = File.size(@output_file)
     puts "✅ Successfully processed Google My Maps data!"
     puts "   📍 Map ID: #{@maps_id}"
+    puts "   🏷️  Layer: #{@layer_name}"
     puts "   📊 Valid features: #{@valid_features.length}"
     puts "   💾 File size: #{format_file_size(file_size)}"
     puts "   📁 Output: #{@output_file}"
