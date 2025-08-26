@@ -114,6 +114,28 @@ JEKYLL_ENV=production bundle exec jekyll build
 # The built site will be in the _site directory
 ```
 
+## Data Workflow
+
+### Google My Maps Integration
+
+Download and process data from Google My Maps:
+
+```bash
+# Set your Google My Maps ID
+export MY_GOOGLE_MAPS_ID="your_map_id_here"
+
+# Download and process the data
+rake download_maps
+
+# Clean up temporary files
+rake clean
+```
+
+**Requirements:**
+- GDAL/OGR: `brew install gdal` (for KML to GeoJSON conversion)
+- HTTP gem: `bundle install` (for reliable downloads)
+- Public Google My Maps (set to "Anyone with the link" can view)
+
 ## Layouts
 
 ### Map Layout (`map.html`)
@@ -155,6 +177,7 @@ This project is open source. Please check the LICENSE file for details.
 - **CSS Framework**: Bootstrap 5.3.2 (CDN)
 - **Map Library**: MapLibre GL JS 3.6.2 (CDN)
 - **Basemap**: Carto Positron (hosted on Carto servers)
+- **Data Processing**: Ruby classes for Google My Maps integration
 - **Architecture**: Modular CSS/JS files, separate layouts
 - **Code Quality**: StandardRB
 - **Deployment**: GitHub Pages via GitHub Actions

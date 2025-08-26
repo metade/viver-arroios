@@ -56,41 +56,38 @@ export MY_GOOGLE_MAPS_ID="your_map_id_here"
 # Download and process the data
 rake download_maps
 
-# View statistics about the downloaded data
-rake stats
-
 # Clean up temporary files
 rake clean
 ```
 
-### Method 2: Using the Helper Script
+### Method 2: Using the Ruby Class Directly
 
-The helper script provides more options and verbose output:
+For integration in other Ruby code:
 
-```bash
-# Basic usage
-ruby scripts/download_maps.rb --maps-id your_map_id_here
+```ruby
+require_relative 'scripts/download_maps'
 
-# With verbose output
-ruby scripts/download_maps.rb --maps-id your_map_id_here --verbose
+downloader = GoogleMyMapsDownloader.new(
+  maps_id: 'your_map_id_here',
+  output: 'tmp/data.geojson',
+  verbose: true
+)
 
-# Custom output file
-ruby scripts/download_maps.rb --maps-id your_map_id_here --output custom_data.geojson
-
-# Using environment variable
-MY_GOOGLE_MAPS_ID="your_map_id_here" ruby scripts/download_maps.rb
-
-# Show help
-ruby scripts/download_maps.rb --help
+downloader.download_and_process
+puts "Downloaded #{downloader.valid_features.length} features"
 ```
 
 ## Workflow Steps
 
-1. **Download KML**: Fetches the map data from Google My Maps in KML format
-2. **Convert to GeoJSON**: Uses GDAL's `ogr2ogr` to convert KML to GeoJSON
-3. **Filter Features**: Removes features with invalid or missing coordinates
-4. **Validate Geometry**: Ensures all coordinates are within valid ranges
-5. **Save Result**: Outputs clean GeoJSON to `tmp/data.geojson`
+The `GoogleMyMapsDownloader` class handles the entire workflow:
+
+1. **Validate Requirements**: Checks for GDAL, HTTP gem, and map ID
+2. **Download KML**: Fetches map data using `forcekml=1` parameter
+3. **Convert to GeoJSON**: Uses GDAL's `ogr2ogr` for format conversion
+4. **Filter Features**: Removes features with invalid or missing coordinates
+5. **Validate Geometry**: Ensures all coordinates are within valid ranges
+6. **Save Result**: Outputs clean GeoJSON with statistics
+7. **Cleanup**: Removes temporary files
 
 ## Data Validation
 
@@ -189,7 +186,6 @@ The resulting `tmp/data.geojson` file contains:
    ```
 
 6. **Connection/Network Issues**
-   - Test connectivity: `ruby scripts/test_http.rb`
    - Corporate networks may block Google services
    - Try from a different network if possible
 
@@ -206,8 +202,7 @@ After successfully downloading the data, you can:
 
 1. **Generate PMTiles** (next step in the workflow)
 2. **Visualize on the map** using MapLibre
-3. **Analyze the data** using the statistics rake task
-4. **Customize processing** by modifying the helper script
+3. **Customize processing** by modifying the Ruby class
 
 ## Environment Variables
 

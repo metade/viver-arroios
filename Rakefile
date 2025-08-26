@@ -2,6 +2,9 @@ require "json"
 require "http"
 require "rake/clean"
 
+# Load the downloader class
+require_relative "scripts/download_maps"
+
 directory "tmp"
 
 file "tmp/data.geojson" => "tmp" do
@@ -18,13 +21,23 @@ file "tmp/data.geojson" => "tmp" do
     exit 1
   end
 
-  # Use the helper script to download and process the data
-  puts "Using Google My Maps downloader script with http gem..."
-  success = system("ruby scripts/download_maps.rb --maps-id #{maps_id} --output tmp/data.geojson --verbose")
+  # Use the GoogleMyMapsDownloader class directly
+  puts "Downloading Google My Maps data using Ruby class..."
+  downloader = GoogleMyMapsDownloader.new(
+    maps_id: maps_id,
+    output: "tmp/data.geojson",
+    verbose: true
+  )
 
-  unless success
-    puts "Error: Failed to download Google My Maps data"
-    puts "Check the output above for specific error details"
+  begin
+    downloader.download_and_process
+    puts "✅ Successfully downloaded and processed Google My Maps data!"
+  rescue => e
+    puts "❌ Error: #{e.message}"
+    puts "Check that:"
+    puts "  - Your map ID is correct"
+    puts "  - Your map is publicly accessible"
+    puts "  - You have GDAL installed"
     exit 1
   end
 end
@@ -32,4 +45,7 @@ end
 desc "Download and process Google My Maps data"
 task download_maps: "tmp/data.geojson"
 
+# Files to clean
 CLEAN.include("tmp/data.geojson")
+CLEAN.include("tmp/raw_data.kml")
+CLEAN.include("tmp/temp_data.geojson")

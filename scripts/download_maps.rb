@@ -2,13 +2,17 @@
 
 require "http"
 require "json"
-require "optparse"
 
 class GoogleMyMapsDownloader
-  def initialize(options = {})
-    @verbose = options[:verbose] || false
-    @output_file = options[:output] || "tmp/data.geojson"
-    @maps_id = options[:maps_id]
+  attr_reader :valid_features, :maps_id, :output_file
+
+  def initialize(maps_id:, output: "tmp/data.geojson", verbose: false)
+    @verbose = verbose
+    @output_file = output
+    @maps_id = maps_id
+    @kml_data = nil
+    @geojson_data = nil
+    @valid_features = []
   end
 
   def download_and_process
@@ -28,25 +32,19 @@ class GoogleMyMapsDownloader
 
   def validate_requirements
     if @maps_id.nil? || @maps_id.empty?
-      puts "Error: Google My Maps ID is required"
-      puts "Usage: ruby scripts/download_maps.rb --maps-id YOUR_MAP_ID"
-      exit 1
+      raise "Google My Maps ID is required"
     end
 
     # Check if GDAL is available
     unless system("which ogr2ogr > /dev/null 2>&1")
-      puts "Error: GDAL/OGR is required but not found"
-      puts "Install with: brew install gdal (macOS) or apt-get install gdal-bin (Ubuntu)"
-      exit 1
+      raise "GDAL/OGR is required but not found. Install with: brew install gdal (macOS) or apt-get install gdal-bin (Ubuntu)"
     end
 
     # Check if http gem is available
     begin
       require "http"
     rescue LoadError
-      puts "Error: http gem is required but not found"
-      puts "Install with: bundle install"
-      exit 1
+      raise "http gem is required but not found. Install with: bundle install"
     end
 
     # Ensure tmp directory exists
@@ -67,12 +65,7 @@ class GoogleMyMapsDownloader
         .get(url)
 
       if response.code != 200
-        puts "Error: Failed to download map data (HTTP #{response.code})"
-        puts "Possible issues:"
-        puts "  - Map is not publicly accessible"
-        puts "  - Invalid map ID"
-        puts "  - Network connectivity issues"
-        exit 1
+        raise "Failed to download map data (HTTP #{response.code}). Possible issues: map is not publicly accessible, invalid map ID, or network connectivity issues."
       end
 
       @kml_data = response.body.to_s
@@ -80,24 +73,14 @@ class GoogleMyMapsDownloader
 
       # Basic validation that we got KML content
       unless @kml_data.match?(/<\?xml|<kml/i)
-        puts "Error: Downloaded content doesn't appear to be valid KML"
-        puts "Content preview: #{@kml_data[0..200]}..."
-        exit 1
+        raise "Downloaded content doesn't appear to be valid KML. Content preview: #{@kml_data[0..200]}..."
       end
 
       # Save raw KML for debugging
       File.write("tmp/raw_data.kml", @kml_data)
       log "Raw KML saved to tmp/raw_data.kml"
     rescue HTTP::Error => e
-      puts "Error: HTTP request failed - #{e.message}"
-      puts "This might be due to:"
-      puts "  - Network connectivity issues"
-      puts "  - Timeout (large maps take longer to download)"
-      puts "  - Google Maps service temporary issues"
-      exit 1
-    rescue => e
-      puts "Error: Unexpected error during download - #{e.message}"
-      exit 1
+      raise "HTTP request failed: #{e.message}. This might be due to network connectivity issues, timeout, or Google Maps service issues."
     end
   end
 
@@ -107,11 +90,7 @@ class GoogleMyMapsDownloader
     conversion_success = system("ogr2ogr -f GeoJSON tmp/temp_data.geojson tmp/raw_data.kml 2>/dev/null")
 
     unless conversion_success && File.exist?("tmp/temp_data.geojson")
-      puts "Error: Failed to convert KML to GeoJSON"
-      puts "This might happen if:"
-      puts "  - The KML file is empty or corrupted"
-      puts "  - GDAL version compatibility issues"
-      exit 1
+      raise "Failed to convert KML to GeoJSON. This might happen if the KML file is empty/corrupted or there are GDAL version compatibility issues."
     end
 
     @geojson_data = JSON.parse(File.read("tmp/temp_data.geojson"))
@@ -217,41 +196,4 @@ class GoogleMyMapsDownloader
       "#{(bytes / (1024.0 * 1024)).round(1)} MB"
     end
   end
-end
-
-# Command line interface
-if __FILE__ == $0
-  options = {}
-
-  OptionParser.new do |opts|
-    opts.banner = "Usage: ruby scripts/download_maps.rb [options]"
-
-    opts.on("-m", "--maps-id ID", "Google My Maps ID (required)") do |id|
-      options[:maps_id] = id
-    end
-
-    opts.on("-o", "--output FILE", "Output GeoJSON file (default: tmp/data.geojson)") do |file|
-      options[:output] = file
-    end
-
-    opts.on("-v", "--verbose", "Verbose output") do
-      options[:verbose] = true
-    end
-
-    opts.on("-h", "--help", "Show this help") do
-      puts opts
-      puts
-      puts "Examples:"
-      puts "  ruby scripts/download_maps.rb --maps-id 1BvNertbkuieuJHi8kmzKuDy4kbD2TINm4"
-      puts "  ruby scripts/download_maps.rb -m 1BvNertbkuieuJHi8kmzKuDy4kbD2TINm4 -v"
-      puts "  MY_GOOGLE_MAPS_ID=1BvNertbkuieuJHi8kmzKuDy4kbD2TINm4 ruby scripts/download_maps.rb"
-      exit
-    end
-  end.parse!
-
-  # Allow maps ID to be set via environment variable
-  options[:maps_id] ||= ENV["MY_GOOGLE_MAPS_ID"]
-
-  downloader = GoogleMyMapsDownloader.new(options)
-  downloader.download_and_process
 end
