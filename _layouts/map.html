@@ -24,6 +24,19 @@
     <main class="page-content" aria-label="Content">
       <div id="map"></div>
       {{ content }}
+
+      <!-- Side Panel -->
+      <div class="offcanvas offcanvas-end" tabindex="-1" id="detailsPanel" aria-labelledby="detailsPanelLabel">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="detailsPanelLabel">Detalhes da Proposta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <div id="panelContent">
+            <p class="text-muted">Clique num marcador para ver os detalhes.</p>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- Bootstrap JS -->
@@ -31,6 +44,9 @@
 
     <!-- MapLibre GL JS -->
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+    <!-- PMTiles -->
+    <script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
 
     <!-- Map JS -->
     <script src="{{ '/assets/js/map.js' | relative_url }}"></script>
