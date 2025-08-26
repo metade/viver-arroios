@@ -13,7 +13,7 @@ end
 # Development dependencies
 group :development do
   gem "standardrb", "~> 1.0"
-  gem "webrick", "~> 1.7"
+  gem "webrick", git: "https://github.com/metade/webrick.git", branch: "fix-if-range-header-returning-304"
   gem "http", "~> 5.0"
 end
 
