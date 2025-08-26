@@ -33,8 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
         },
       ],
     },
-    center: [-9.142, 38.736], // Lisbon, Portugal coordinates
-    zoom: 12,
+    center: [-9.13628, 38.72614], // Arroios center coordinates
+    zoom: 14,
   });
 
   // Add navigation control (the +/- zoom buttons)
@@ -86,6 +86,55 @@ document.addEventListener("DOMContentLoaded", function () {
     map.addSource("pmtiles-source", {
       type: "vector",
       url: "pmtiles://./assets/data/data.pmtiles",
+    });
+
+    // Add Arroios border layer
+    map.addLayer({
+      id: "arroios-border",
+      type: "fill",
+      source: "pmtiles-source",
+      "source-layer": "arroios",
+      paint: {
+        "fill-color": "#3b82f6",
+        "fill-opacity": 0.1,
+      },
+    });
+
+    // Add Arroios border outline
+    map.addLayer({
+      id: "arroios-border-outline",
+      type: "line",
+      source: "pmtiles-source",
+      "source-layer": "arroios",
+      paint: {
+        "line-color": "#3b82f6",
+        "line-width": 3,
+        "line-opacity": 0.8,
+      },
+    });
+
+    // Auto-focus map on Arroios border when data loads
+    map.on("sourcedata", function (e) {
+      if (e.sourceId === "pmtiles-source" && e.isSourceLoaded) {
+        const arroiosFeatures = map.querySourceFeatures("pmtiles-source", {
+          sourceLayer: "arroios",
+        });
+
+        if (arroiosFeatures.length > 0) {
+          // Get Arroios bounds and fit map to them
+          const bounds = new maplibregl.LngLatBounds();
+          arroiosFeatures[0].geometry.coordinates[0].forEach((coord) => {
+            bounds.extend(coord);
+          });
+
+          // Fit map to Arroios bounds with padding
+          map.fitBounds(bounds, {
+            padding: 50,
+            maxZoom: 15,
+            duration: 1500,
+          });
+        }
+      }
     });
 
     // Add propostas layer as circles (markers)
