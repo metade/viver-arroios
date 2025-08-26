@@ -43,7 +43,7 @@ file "tmp/propostas.geojson" => "tmp" do
   end
 end
 
-file "assets/data/data.pmtiles" => ["tmp/propostas.geojson"] do |task|
+file "assets/data/data.pmtiles" => ["tmp/propostas.geojson", "data/arroios.geojson"] do |task|
   # Check if tippecanoe is available
   unless system("which tippecanoe > /dev/null 2>&1")
     puts "Error: Tippecanoe is required but not found"
