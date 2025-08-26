@@ -4,7 +4,7 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 
-assets/data
+assets/data/*.pmtiles
 
 # Bundler
 .bundle/
