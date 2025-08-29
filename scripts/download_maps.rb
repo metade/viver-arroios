@@ -2,6 +2,8 @@
 
 require "http"
 require "json"
+require "uri"
+require "digest"
 
 class GoogleMyMapsDownloader
   attr_reader :valid_features, :maps_id, :output_file, :layer_name
@@ -14,6 +16,8 @@ class GoogleMyMapsDownloader
     @kml_data = nil
     @geojson_data = nil
     @valid_features = []
+    @downloaded_images = {}
+    @images_dir = "assets/data/images"
   end
 
   def download_and_process
@@ -21,6 +25,8 @@ class GoogleMyMapsDownloader
     download_kml
     convert_to_geojson
     filter_features
+    download_images
+    write_final_geojson
     cleanup
     print_summary
   end
@@ -50,6 +56,9 @@ class GoogleMyMapsDownloader
 
     # Ensure tmp directory exists
     Dir.mkdir("tmp") unless Dir.exist?("tmp")
+
+    # Ensure images directory exists
+    Dir.mkdir(@images_dir) unless Dir.exist?(@images_dir)
   end
 
   def download_kml
@@ -106,9 +115,121 @@ class GoogleMyMapsDownloader
     end
 
     log "Filtered #{@geojson_data["features"].length} features down to #{@valid_features.length} valid features"
+  end
+
+  def download_images
+    log "Processing images from gx_media_links..."
+
+    image_count = 0
+
+    @valid_features.each_with_index do |feature, index|
+      properties = feature["properties"]
+      next unless properties && properties["gx_media_links"]
+
+      media_links = properties["gx_media_links"].to_s.strip
+      next if media_links.empty?
+
+      # Handle multiple URLs separated by whitespace or commas
+      urls = media_links.split(/[\s,]+/).reject(&:empty?)
+      downloaded_urls = []
+      urls.each do |url|
+        local_path = download_single_image(url, index)
+        if local_path
+          downloaded_urls << local_path
+          image_count += 1
+        end
+      rescue => e
+        log "Failed to download image #{url}: #{e.message}"
+      end
+
+      # Update the feature properties with local paths
+      if downloaded_urls.any?
+        properties["gx_media_links"] = downloaded_urls.join(" ")
+      else
+        # Remove the property if no images were downloaded
+        properties.delete("gx_media_links")
+      end
+    end
+
+    log "Downloaded #{image_count} images to #{@images_dir}/"
+  end
+
+  def download_single_image(url, feature_index)
+    return nil unless url.match?(/^https?:\/\//)
+
+    # Create a unique filename based on URL hash and feature index
+    url_hash = Digest::MD5.hexdigest(url)[0..8]
+    extension = extract_file_extension(url)
+    filename = "#{@layer_name}_#{feature_index}_#{url_hash}#{extension}"
+    local_path = File.join(@images_dir, filename)
+    relative_path = "./#{local_path}"
+
+    # Skip if already downloaded
+    if @downloaded_images[url]
+      return @downloaded_images[url]
+    end
+
+    # Skip if file already exists
+    if File.exist?(local_path)
+      log "Image already exists: #{filename}"
+      @downloaded_images[url] = relative_path
+      return relative_path
+    end
+
+    log "Downloading image: #{url} -> #{filename}"
+
+    response = HTTP.timeout(30)
+      .follow(max_hops: 3)
+      .headers(
+        "User-Agent" => "Mozilla/5.0 (compatible; Jekyll Map Downloader)",
+        "Accept" => "image/*,*/*"
+      )
+      .get(url)
+
+    if response.code == 200
+      # Validate it's actually an image
+      content_type = response.headers["Content-Type"].to_s
+      unless content_type.start_with?("image/")
+        log "Warning: #{url} doesn't appear to be an image (Content-Type: #{content_type})"
+      end
+
+      # Convert response body to string for file writing
+      body_content = response.body.to_s
+      File.write(local_path, body_content)
+      @downloaded_images[url] = relative_path
+      log "Successfully downloaded: #{filename} (#{format_file_size(body_content.length)})"
+      relative_path
+    else
+      log "Failed to download #{url}: HTTP #{response.code}"
+      nil
+    end
+  rescue => e
+    log "Error downloading #{url}: #{e.message}"
+    nil
+  end
+
+  def extract_file_extension(url)
+    # Try to get extension from URL path
+    uri = URI.parse(url)
+    path = uri.path.to_s
+
+    # Common image extensions
+    if path.match?(/\.(jpe?g|png|gif|webp|bmp|svg)$/i)
+      extension = path.match(/(\.[^.]+)$/)[1].downcase
+      return extension
+    end
+
+    # Default to .jpg if no extension found
+    ".jpg"
+  rescue
+    ".jpg"
+  end
+
+  def write_final_geojson
+    log "Writing final GeoJSON file..."
 
     # Create the final GeoJSON structure
-    filtered_geojson = {
+    final_geojson = {
       "type" => "FeatureCollection",
       "name" => "#{@layer_name.capitalize} Layer (#{@maps_id})",
       "crs" => {
@@ -121,8 +242,8 @@ class GoogleMyMapsDownloader
     }
 
     # Write the final GeoJSON file
-    File.write(@output_file, JSON.pretty_generate(filtered_geojson))
-    log "Saved filtered GeoJSON to #{@output_file}"
+    File.write(@output_file, JSON.pretty_generate(final_geojson))
+    log "Saved final GeoJSON to #{@output_file}"
   end
 
   def validate_feature_geometry(feature)
@@ -179,13 +300,21 @@ class GoogleMyMapsDownloader
     puts "   📍 Map ID: #{@maps_id}"
     puts "   🏷️  Layer: #{@layer_name}"
     puts "   📊 Valid features: #{@valid_features.length}"
+    puts "   🖼️  Downloaded images: #{@downloaded_images.length}"
     puts "   💾 File size: #{format_file_size(file_size)}"
     puts "   📁 Output: #{@output_file}"
+    puts "   🖼️  Images folder: #{@images_dir}/"
 
     # Show feature type breakdown
     feature_types = @valid_features.group_by { |f| f["geometry"]["type"] }
     feature_types.each do |type, features|
       puts "   └─ #{type}: #{features.length} features"
+    end
+
+    # Show features with images
+    features_with_images = @valid_features.count { |f| f["properties"] && f["properties"]["gx_media_links"] }
+    if features_with_images > 0
+      puts "   └─ Features with images: #{features_with_images}"
     end
   end
 

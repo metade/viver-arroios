@@ -127,12 +127,13 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // Add propostas layer as circles (markers)
+    // Add propostas layer for point geometries (circles/markers)
     map.addLayer({
       id: "propostas-markers",
       type: "circle",
       source: "pmtiles-source",
       "source-layer": "propostas",
+      filter: ["==", ["geometry-type"], "Point"],
       paint: {
         "circle-radius": 8,
         "circle-color": "#3b82f6",
@@ -142,12 +143,48 @@ document.addEventListener("DOMContentLoaded", function () {
       },
     });
 
-    // Add hover effect
+    // Add propostas layer for polygon geometries (fill)
+    map.addLayer({
+      id: "propostas-polygons-fill",
+      type: "fill",
+      source: "pmtiles-source",
+      "source-layer": "propostas",
+      filter: ["==", ["geometry-type"], "Polygon"],
+      paint: {
+        "fill-color": "#3b82f6",
+        "fill-opacity": 0.4,
+      },
+    });
+
+    // Add propostas layer for polygon geometries (outline)
+    map.addLayer({
+      id: "propostas-polygons-outline",
+      type: "line",
+      source: "pmtiles-source",
+      "source-layer": "propostas",
+      filter: ["==", ["geometry-type"], "Polygon"],
+      paint: {
+        "line-color": "#3b82f6",
+        "line-width": 2,
+        "line-opacity": 0.8,
+      },
+    });
+
+    // Add hover effect for markers
     map.on("mouseenter", "propostas-markers", function () {
       map.getCanvas().style.cursor = "pointer";
     });
 
     map.on("mouseleave", "propostas-markers", function () {
+      map.getCanvas().style.cursor = "";
+    });
+
+    // Add hover effect for polygons
+    map.on("mouseenter", "propostas-polygons-fill", function () {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", "propostas-polygons-fill", function () {
       map.getCanvas().style.cursor = "";
     });
 
@@ -159,6 +196,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (map.getLayer("propostas-markers-selected")) {
         map.removeLayer("propostas-markers-selected");
         map.removeSource("propostas-markers-selected");
+      }
+      if (map.getLayer("propostas-polygons-selected")) {
+        map.removeLayer("propostas-polygons-selected");
+        map.removeSource("propostas-polygons-selected");
       }
 
       // Highlight selected marker
@@ -193,6 +234,21 @@ document.addEventListener("DOMContentLoaded", function () {
         <p class="lead">${properties["proposta"]}</p>
         <p>${properties["description"]}</p>
       `;
+
+      // Add images if gx_media_links exists
+      if (
+        properties["gx_media_links"] &&
+        properties["gx_media_links"].trim() !== ""
+      ) {
+        const imageUrls = properties["gx_media_links"].trim().split(/\s+/);
+        panelContent += '<div class="mt-3">';
+        imageUrls.forEach((imageUrl, index) => {
+          panelContent += `
+            <img src="${imageUrl}" class="img-fluid rounded mb-2" alt="Proposta image ${index + 1}" style="max-width: 100%; height: auto; display: block;">
+          `;
+        });
+        panelContent += "</div>";
+      }
       // // Add all properties to the panel
       // Object.keys(properties).forEach((key) => {
       //   if (
@@ -208,6 +264,81 @@ document.addEventListener("DOMContentLoaded", function () {
       //   `;
       //   }
       // });
+
+      // Show marker content and populate it
+      showPanelContent("markerContent");
+      const markerContentInPanel = document.querySelector(
+        "#panelBody #markerContent",
+      );
+      if (markerContentInPanel) {
+        markerContentInPanel.innerHTML = panelContent;
+      }
+
+      // Show the offcanvas panel
+      const panel = new bootstrap.Offcanvas(
+        document.getElementById("detailsPanel"),
+      );
+      panel.show();
+    });
+
+    // Add click handler for propostas polygons
+    map.on("click", "propostas-polygons-fill", function (e) {
+      const properties = e.features[0].properties;
+
+      // Remove previous selection styling
+      if (map.getLayer("propostas-markers-selected")) {
+        map.removeLayer("propostas-markers-selected");
+        map.removeSource("propostas-markers-selected");
+      }
+      if (map.getLayer("propostas-polygons-selected")) {
+        map.removeLayer("propostas-polygons-selected");
+        map.removeSource("propostas-polygons-selected");
+      }
+
+      // Highlight selected polygon
+      map.addSource("propostas-polygons-selected", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [e.features[0]],
+        },
+      });
+
+      map.addLayer({
+        id: "propostas-polygons-selected",
+        type: "fill",
+        source: "propostas-polygons-selected",
+        paint: {
+          "fill-color": "#dc3545",
+          "fill-opacity": 0.6,
+        },
+      });
+
+      // Create panel content for polygon details
+      let panelContent = "";
+
+      console.log(properties);
+
+      panelContent += `
+        <h3>${properties["Name"]}</h3>
+        <p class="lead">${properties["proposta"]}</p>
+        <p>${properties["description"]}</p>
+      `;
+
+      // Add images if gx_media_links exists
+      if (
+        properties["gx_media_links"] &&
+        properties["gx_media_links"].trim() !== ""
+      ) {
+        const imageUrls = properties["gx_media_links"].trim().split(/\s+/);
+        panelContent += '<div class="mt-3">';
+        imageUrls.forEach((imageUrl, index) => {
+          panelContent += `
+            <img src="${imageUrl}" class="img-fluid rounded mb-2" alt="Proposta image ${index + 1}" style="max-width: 100%; height: auto; display: block;">
+          `;
+        });
+        panelContent += "</div>";
+      }
 
       // Show marker content and populate it
       showPanelContent("markerContent");
@@ -271,6 +402,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (map.getLayer("propostas-markers-selected")) {
       map.removeLayer("propostas-markers-selected");
       map.removeSource("propostas-markers-selected");
+    }
+    if (map.getLayer("propostas-polygons-selected")) {
+      map.removeLayer("propostas-polygons-selected");
+      map.removeSource("propostas-polygons-selected");
     }
 
     // Show general info content
