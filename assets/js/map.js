@@ -88,18 +88,6 @@ document.addEventListener("DOMContentLoaded", function () {
       url: "pmtiles://./assets/data/data.pmtiles",
     });
 
-    // Add Arroios border layer
-    map.addLayer({
-      id: "arroios-border",
-      type: "fill",
-      source: "pmtiles-source",
-      "source-layer": "arroios",
-      paint: {
-        "fill-color": "#3b82f6",
-        "fill-opacity": 0.1,
-      },
-    });
-
     // Add Arroios border outline
     map.addLayer({
       id: "arroios-border-outline",
@@ -107,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
       source: "pmtiles-source",
       "source-layer": "arroios",
       paint: {
-        "line-color": "#3b82f6",
+        "line-color": "#A9A9A9",
         "line-width": 3,
         "line-opacity": 0.8,
       },
