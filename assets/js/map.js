@@ -1,5 +1,7 @@
 // Map initialization and configuration
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize panel content from page templates
+  initializePanelContent();
   // Add PMTiles protocol
   let protocol = new pmtiles.Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -181,7 +183,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
       });
 
-      // Create panel content
+      // Create panel content for marker details
       let panelContent = "";
 
       // Add all properties to the panel
@@ -192,16 +194,22 @@ document.addEventListener("DOMContentLoaded", function () {
           properties[key] !== ""
         ) {
           panelContent += `
-            <div class="panel-item">
-              <div class="panel-label">${key}</div>
-              <div class="panel-value">${properties[key]}</div>
-            </div>
-          `;
+          <div class="mb-3 pb-2 border-bottom">
+            <div class="fw-semibold text-body-secondary small text-uppercase mb-1">${key}</div>
+            <div class="text-dark">${properties[key]}</div>
+          </div>
+        `;
         }
       });
 
-      // Update panel content
-      document.getElementById("panelContent").innerHTML = panelContent;
+      // Show marker content and populate it
+      showPanelContent("markerContent");
+      const markerContentInPanel = document.querySelector(
+        "#panelBody #markerContent",
+      );
+      if (markerContentInPanel) {
+        markerContentInPanel.innerHTML = panelContent;
+      }
 
       // Show the offcanvas panel
       const panel = new bootstrap.Offcanvas(
@@ -212,6 +220,61 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Propostas layer loaded successfully!");
   }
+
+  // Initialize panel content from page templates
+  function initializePanelContent() {
+    const panelBody = document.getElementById("panelBody");
+    const contentTemplates = document.querySelectorAll(".panel-content");
+
+    // Move all panel content templates to the panel body
+    contentTemplates.forEach((template) => {
+      const clonedTemplate = template.cloneNode(true);
+      panelBody.appendChild(clonedTemplate);
+    });
+
+    // Show default content initially
+    showPanelContent("defaultContent");
+  }
+
+  // Utility function to switch panel content
+  function showPanelContent(contentId) {
+    // Hide all panel content sections in the panel body
+    document
+      .querySelectorAll("#panelBody .panel-content")
+      .forEach((content) => {
+        content.classList.add("d-none");
+      });
+
+    // Show the requested content
+    const targetContent = document.querySelector(`#panelBody #${contentId}`);
+    if (targetContent) {
+      targetContent.classList.remove("d-none");
+
+      // Update panel title from data attribute
+      const title = targetContent.getAttribute("data-panel-title");
+      if (title) {
+        document.getElementById("detailsPanelLabel").textContent = title;
+      }
+    }
+  }
+
+  // Add event listener for the more info button
+  document.getElementById("moreInfoBtn").addEventListener("click", function () {
+    // Remove previous selection styling if exists
+    if (map.getLayer("propostas-markers-selected")) {
+      map.removeLayer("propostas-markers-selected");
+      map.removeSource("propostas-markers-selected");
+    }
+
+    // Show general info content
+    showPanelContent("generalInfoContent");
+
+    // Show the offcanvas panel
+    const panel = new bootstrap.Offcanvas(
+      document.getElementById("detailsPanel"),
+    );
+    panel.show();
+  });
 
   // Expose map to global scope for debugging
   window.mapInstance = map;

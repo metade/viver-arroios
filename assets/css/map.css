@@ -1,12 +1,12 @@
-/* Map-specific styles */
+/* Bootstrap Icons */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css");
+
+/* Essential map-specific styles that can't be replaced with Bootstrap */
 body.map-page {
     margin: 0;
     padding: 0;
     height: 100vh;
     overflow: hidden;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
 }
 
 #map {
@@ -22,28 +22,14 @@ body.map-page {
     top: 20px;
     left: 20px;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     max-width: 320px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
     animation: fadeIn 0.5s ease-out;
 }
 
-.map-overlay h1 {
-    margin: 0 0 12px 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.map-overlay p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #7f8c8d;
-    line-height: 1.4;
+/* Custom button hover effect */
+.map-overlay .btn:hover {
+    transform: translateY(-1px);
 }
 
 /* MapLibre GL controls styling */
@@ -69,54 +55,12 @@ body.map-page {
     }
 }
 
-/* Side Panel styles */
+/* Side Panel width */
 #detailsPanel {
     --bs-offcanvas-width: 400px;
 }
 
-#detailsPanel .offcanvas-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-#detailsPanel .offcanvas-title {
-    color: #2c3e50;
-    font-weight: 600;
-}
-
-#panelContent {
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
-}
-
-.panel-item {
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.panel-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.panel-label {
-    font-weight: 600;
-    color: #495057;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.25rem;
-}
-
-.panel-value {
-    color: #212529;
-    font-size: 1rem;
-    line-height: 1.4;
-}
-
-/* Selected marker highlight */
+/* Selected marker highlight animation */
 .propostas-marker-selected {
     animation: pulse 2s infinite;
 }
@@ -145,19 +89,7 @@ body.map-page {
         max-width: none;
     }
 
-    .map-overlay h1 {
-        font-size: 1.25rem;
-    }
-
-    .map-overlay p {
-        font-size: 0.9rem;
-    }
-
     #detailsPanel {
         --bs-offcanvas-width: 100vw;
-    }
-
-    .panel-value {
-        font-size: 0.9rem;
     }
 }
