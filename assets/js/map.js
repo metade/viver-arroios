@@ -186,21 +186,28 @@ document.addEventListener("DOMContentLoaded", function () {
       // Create panel content for marker details
       let panelContent = "";
 
-      // Add all properties to the panel
-      Object.keys(properties).forEach((key) => {
-        if (
-          properties[key] !== null &&
-          properties[key] !== undefined &&
-          properties[key] !== ""
-        ) {
-          panelContent += `
-          <div class="mb-3 pb-2 border-bottom">
-            <div class="fw-semibold text-body-secondary small text-uppercase mb-1">${key}</div>
-            <div class="text-dark">${properties[key]}</div>
-          </div>
-        `;
-        }
-      });
+      console.log(properties);
+
+      panelContent += `
+        <h3>${properties["Name"]}</h3>
+        <p class="lead">${properties["proposta"]}</p>
+        <p>${properties["description"]}</p>
+      `;
+      // // Add all properties to the panel
+      // Object.keys(properties).forEach((key) => {
+      //   if (
+      //     properties[key] !== null &&
+      //     properties[key] !== undefined &&
+      //     properties[key] !== ""
+      //   ) {
+      //     panelContent += `
+      //     <div class="mb-3 pb-2 border-bottom">
+      //       <div class="fw-semibold text-body-secondary small text-uppercase mb-1">${key}</div>
+      //       <div class="text-dark">${properties[key]}</div>
+      //     </div>
+      //   `;
+      //   }
+      // });
 
       // Show marker content and populate it
       showPanelContent("markerContent");
